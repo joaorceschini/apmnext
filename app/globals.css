@@ -9,6 +9,11 @@
   font-size: 14px;
 }
 
+@font-face {
+  font-family: "cpmono";
+  src: url("./cpmonov07apm/CPMono_v07_Plain.otf");
+}
+
 *,
 ::after,
 ::before {
@@ -30,4 +35,3 @@ body {
     text-wrap: balance;
   }
 }
-

@@ -1,4 +1,5 @@
 "use client";
+
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { type User } from "@supabase/supabase-js";
@@ -49,7 +50,7 @@ export default function UserInfo({ user }: { user: User | null }) {
     <div className="flex gap-2 items-end">
       <div className="h-full flex flex-col justify-end">
         <p className="opacity-70 text-end">X</p>
-        <p>{username || "anonymous"}</p>
+        <p>{username || "..."}</p>
       </div>
       <Link href="/profile" className="hover:opacity-70">
         <Image
