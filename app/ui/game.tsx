@@ -101,17 +101,16 @@ export default function Game({ user }: { user: User | null }) {
       .reverse()
       .forEach((circle) => {
         const target = new PIXI.Graphics();
-        target.beginFill(0x999999);
+        target.lineStyle(2, 0x333333, 1);
+        target.beginFill(0x666666);
         target.drawCircle(circle.x, circle.y, RADIUS);
-        target.lineStyle(4, 0xffffff, 1);
         target.endFill();
 
         const text = new PIXI.Text(circle.n.toString(), {
-          fontFamily: "monofont",
+          fontFamily: "Arial",
           fontSize: 20,
-          fill: "000",
+          fill: "fff",
           align: "center",
-          fontWeight: "bold",
         });
         text.x = circle.x - text.width / 2;
         text.y = circle.y - text.height / 2;
