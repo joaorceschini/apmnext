@@ -49,7 +49,6 @@ export type Database = {
           apm: number | null
           created_at: string
           id: number
-          is_crescent: boolean | null
           targets: number | null
           time: number | null
           user_id: string
@@ -58,7 +57,6 @@ export type Database = {
           apm?: number | null
           created_at?: string
           id?: number
-          is_crescent?: boolean | null
           targets?: number | null
           time?: number | null
           user_id: string
@@ -67,7 +65,6 @@ export type Database = {
           apm?: number | null
           created_at?: string
           id?: number
-          is_crescent?: boolean | null
           targets?: number | null
           time?: number | null
           user_id?: string

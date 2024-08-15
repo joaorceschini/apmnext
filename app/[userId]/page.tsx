@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import ProfileForm from "@/app/ui/profile/profile-form";
 import Header from "@/app/ui/header";
+import UserStats from "@/app/ui/profile/userstats";
 
 export default async function Profile({
   params,
@@ -19,7 +20,7 @@ export default async function Profile({
 
   return (
     <main>
-      <div className="w-full max-w-[80rem] min-h-screen mx-auto flex gap-4 pb-4 flex-col">
+      <div className="w-full max-w-[80rem] min-h-screen mx-auto flex gap-4 pb-4 flex-col text-sm">
         <Header />
         <div className="flex flex-col gap-4">
           <div className="flex max-w-full px-4 justify-between text-sm">
@@ -27,11 +28,9 @@ export default async function Profile({
               <p>profile</p>
             </div>
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex gap-4">
             <ProfileForm user={user} userId={userId} />
-            <div className="flex justify-between px-4 py-2 text-sm">
-              <div className="w-full max-w-[300px]"></div>
-            </div>
+            <UserStats user={user} userId={userId} />
           </div>
         </div>
       </div>

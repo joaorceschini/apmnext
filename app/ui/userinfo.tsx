@@ -14,6 +14,8 @@ export default function UserInfo({ user }: { user: User | null }) {
   const [username, setUsername] = useState<string | null>(null);
   const [website, setWebsite] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [hs, setHs] = useState<number | null>(null);
+  const [bestTime, setBestTime] = useState<number | null>(null);
 
   const [downloadedAvatar, setDownloadedAvatar] = useState<string | null>(
     avatarUrl,

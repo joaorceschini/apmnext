@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import * as PIXI from "pixi.js";
 import UserInfo from "./userinfo";
 import { type User } from "@supabase/supabase-js";
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
 
 const RADIUS = 25;
-const CIRCLES = 10;
+const CIRCLES = 50;
 
 export default function Game({ user }: { user: User | null }) {
+  const supabase = createClient();
   const canvasRef = useRef<HTMLDivElement>(null);
+  const fpsRef = useRef<number>(0);
   const [clicks, setClicks] = useState(0);
   const [hits, setHits] = useState(0);
   const [wrongHits, setWrongHits] = useState(0);
@@ -18,9 +21,38 @@ export default function Game({ user }: { user: User | null }) {
   const [resetToggle, setResetToggle] = useState(false);
   const [time, setTime] = useState(0);
   const [apm, setApm] = useState(0);
+  const [fps, setFps] = useState(0);
+  const [isHs, setIsHs] = useState(false);
+  const [hs, setHs] = useState<number | null>(null);
+  const [bestTime, setBestTime] = useState<number | null>(null);
 
   var timeStart: number;
   var timeEnd: number;
+
+  const getHighestApm = useCallback(async () => {
+    try {
+      if (!user) throw new Error("Unauthorized");
+
+      const { data, error } = await supabase
+        .from("scores")
+        .select("apm, time")
+        .eq("user_id", user?.id)
+        .eq("targets", selectedCircles)
+        .order("apm", { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      const highestApm = data[0]?.apm || 0;
+      const bestTime = data[0]?.time || 0;
+      setHs(highestApm);
+      setBestTime(bestTime);
+      return highestApm;
+    } catch (error) {
+      console.error(error);
+      return 0;
+    }
+  }, [user, supabase, selectedCircles]);
 
   function resetStats() {
     numbers.arr = [];
@@ -29,6 +61,7 @@ export default function Game({ user }: { user: User | null }) {
     setClicks(0);
     setHits(0);
     setWrongHits(0);
+    setIsHs(false);
   }
 
   let numbers: {
@@ -72,7 +105,7 @@ export default function Game({ user }: { user: User | null }) {
     }
   };
 
-  function drawCircles(
+  async function drawCircles(
     pixiApp: any,
     arr: { x: number; y: number; n: number }[],
   ) {
@@ -82,10 +115,16 @@ export default function Game({ user }: { user: User | null }) {
       timeEnd = new Date().getTime();
       const time = timeEnd - timeStart;
       const timeFormated = time / 1000;
-      setTime(timeFormated);
       var apm = Math.ceil((CIRCLES / time) * 1e3 * 60 * 1.8);
-      setApm(apm);
       setClicks((clicks) => clicks + 1);
+      const highestApm = await getHighestApm();
+      if (!hs || apm > highestApm) {
+        getHighestApm();
+        setIsHs(true);
+      }
+      setApm(apm);
+      setTime(timeFormated);
+      addScore({ apm, time, selectedCircles });
     }
 
     arr
@@ -128,11 +167,21 @@ export default function Game({ user }: { user: User | null }) {
       canvasRef.current.appendChild(pixiApp.view);
     }
 
+    PIXI.Ticker.shared.add(() => {
+      fpsRef.current = PIXI.Ticker.shared.FPS;
+    });
+
+    const intervalId = setInterval(() => {
+      setFps(fpsRef.current);
+    }, 500);
+
     for (let i = 0; i < selectedCircles; i++) {
       spawnCircle(numbers);
     }
 
     drawCircles(pixiApp, numbers.arr);
+
+    getHighestApm();
 
     const keyUpHandler = (e: any) => {
       if (
@@ -150,6 +199,7 @@ export default function Game({ user }: { user: User | null }) {
     document.addEventListener("keyup", keyUpHandler);
 
     return () => {
+      clearInterval(intervalId);
       pixiApp.destroy(true, { children: true });
       document.removeEventListener("keyup", keyUpHandler);
     };
@@ -170,6 +220,41 @@ export default function Game({ user }: { user: User | null }) {
       setClicks(clicks + 1);
     }
   };
+
+  async function addScore({
+    apm,
+    time,
+    selectedCircles,
+  }: {
+    apm: number | null;
+    time: number | null;
+    selectedCircles: number | null;
+  }) {
+    try {
+      if (!user) {
+        console.log("no user");
+        throw new Error("Unauthorized");
+      }
+
+      const { error } = await supabase.from("scores").insert({
+        user_id: user?.id,
+        apm,
+        time,
+        targets: selectedCircles,
+      });
+      if (error) throw error;
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === "Unauthorized") {
+          console.error("you are not authorized to add this score");
+        } else {
+          console.error(`error adding score: ${error.message}`);
+        }
+      } else {
+        console.error("an unexpected error occurred");
+      }
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -208,10 +293,10 @@ export default function Game({ user }: { user: User | null }) {
           <div className="w-full max-w-[260px]">
             <div className="flex justify-between font-bold">
               <p>APM</p>
-              <p>{apm}</p>
+              {isHs ? <p className="text-amber-200">{apm}</p> : <p>{apm}</p>}
             </div>
             <div className="flex justify-between font-bold">
-              <p>time</p>
+              <p>TIME</p>
               <p>{time}</p>
             </div>
             <div className="flex justify-between">
@@ -231,25 +316,49 @@ export default function Game({ user }: { user: User | null }) {
               <p>{clicks - hits}</p>
             </div>
             <div className="flex justify-between">
-              <p>type</p>
-              <p>decrescent</p>
-            </div>
-            <div className="flex justify-between">
               <p>targets</p>
               <p>{selectedCircles}</p>
             </div>
           </div>
           <div className="flex flex-col justify-between items-end">
             <div className="flex flex-col gap-2">
-              <div className="flex justify-between">
-                <p>max APM</p>
-                <p>540</p>
+              <div className="text-end">
+                <p className="opacity-50">FPS: {fps.toFixed(2)}</p>
               </div>
-              <p className="text-gray-300">
+              {hs ? (
+                <div className="flex gap-2 font-bold">
+                  <p>HS[{selectedCircles}]</p>
+                  <div className="flex flex-col flex-1">
+                    <div className="flex justify-between">
+                      <p>APM</p>
+                      <p>{hs}</p>
+                    </div>
+                    <div className="flex justify-between">
+                      <p>TIME</p>
+                      <p>{(bestTime as number) / 1000}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-2 font-bold">
+                  <p>HS[{selectedCircles}]</p>
+                  <div className="flex flex-col flex-1">
+                    <div className="flex justify-between">
+                      <p>APM</p>
+                      <p>...</p>
+                    </div>
+                    <div className="flex justify-between">
+                      <p>TIME</p>
+                      <p>...</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <p className="text-gray-400">
                 press <strong className="text-white">r</strong> or{" "}
                 <strong className="text-white">space</strong> to{" "}
                 <button onClick={handleReset} className="outline-none">
-                  reset
+                  restart
                 </button>
               </p>
             </div>
