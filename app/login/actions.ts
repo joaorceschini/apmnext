@@ -4,23 +4,32 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
-import { Provider } from "@supabase/supabase-js";
-import { getURL } from "@/utils/helpers";
+import { z } from "zod";
 
 export async function emailLogin(formData: FormData) {
   const supabase = createClient();
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  };
+  try {
+    const LoginFormSchema = z.object({
+      email: z.string().email(),
+      password: z
+        .string()
+        .min(6, { message: "password must be longer than 6 characters" }),
+    });
 
-  const { error } = await supabase.auth.signInWithPassword(data);
+    const data = LoginFormSchema.parse({
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+    });
 
-  if (error) {
-    redirect("/login?message=could not authenticate user");
+    const { error } = await supabase.auth.signInWithPassword(data);
+
+    if (error) {
+      redirect("/login?message=could not authenticate user");
+    }
+  } catch (error: any) {
+    console.log(error.issues[0].message);
+    redirect(`/login?message=${error.issues[0].message}`);
   }
 
   revalidatePath("/", "layout");
@@ -31,25 +40,4 @@ export async function signOut() {
   const supabase = createClient();
   await supabase.auth.signOut();
   redirect("/login");
-}
-
-export async function oAuthSignIn(provider: Provider) {
-  if (!provider) {
-    return redirect("/login?message=no provider selected");
-  }
-
-  const supabase = createClient();
-  const redirectUrl = getURL("/auth/callback");
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider,
-    options: {
-      redirectTo: redirectUrl,
-    },
-  });
-
-  if (error) {
-    redirect("/login?message=could not authenticate user");
-  }
-
-  return redirect(data.url);
 }

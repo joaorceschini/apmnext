@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import * as PIXI from "pixi.js";
 import UserInfo from "./userinfo";
 import { type User } from "@supabase/supabase-js";
+import Link from "next/link";
 
 const RADIUS = 25;
 const CIRCLES = 10;
@@ -46,7 +47,6 @@ export default function Game({ user }: { user: User | null }) {
     arr: { x: number; y: number; n: number }[];
     pos: number;
   }) {
-    console.log("spawn");
     var circle = {
       x: getRndInteger(RADIUS, 500 - RADIUS),
       y: getRndInteger(RADIUS, 300 - RADIUS),
@@ -60,18 +60,13 @@ export default function Game({ user }: { user: User | null }) {
   }
 
   const handleHit = (pixiApp: any, target: PIXI.Container, n: number) => {
-    console.log("n: ", n);
-    console.log("numbers.pos: ", numbers.pos);
-
     if (n == numbers.arr[0].n) {
       if (n == CIRCLES) timeStart = new Date().getTime();
-      console.log("hit");
       pixiApp.stage.removeChild(target);
       setHits((hits) => hits + 1);
       numbers.arr.shift();
       spawnCircle(numbers);
       drawCircles(pixiApp, numbers.arr);
-      console.log(numbers.arr);
     } else {
       setWrongHits((wrongHits) => wrongHits + 1);
     }
@@ -84,15 +79,12 @@ export default function Game({ user }: { user: User | null }) {
     pixiApp.stage.removeChildren();
 
     if (arr.length == 0) {
-      console.log("acabou");
       timeEnd = new Date().getTime();
-      console.log(timeEnd - timeStart);
       const time = timeEnd - timeStart;
       const timeFormated = time / 1000;
       setTime(timeFormated);
       var apm = Math.ceil((CIRCLES / time) * 1e3 * 60 * 1.8);
       setApm(apm);
-      console.log(apm);
       setClicks((clicks) => clicks + 1);
     }
 
@@ -129,7 +121,7 @@ export default function Game({ user }: { user: User | null }) {
       width: 500,
       height: 300,
       antialias: true,
-      resolution: window.devicePixelRatio,
+      resolution: 1,
     });
 
     if (canvasRef.current && pixiApp.view instanceof HTMLCanvasElement) {
@@ -141,8 +133,6 @@ export default function Game({ user }: { user: User | null }) {
     }
 
     drawCircles(pixiApp, numbers.arr);
-
-    console.log(numbers);
 
     const keyUpHandler = (e: any) => {
       if (
@@ -164,6 +154,11 @@ export default function Game({ user }: { user: User | null }) {
       document.removeEventListener("keyup", keyUpHandler);
     };
   }, [selectedCircles, resetToggle]);
+
+  function handleReset() {
+    resetStats();
+    setResetToggle(!resetToggle);
+  }
 
   const changeSelectOptionHandler = (event: any) => {
     resetStats();
@@ -209,38 +204,58 @@ export default function Game({ user }: { user: User | null }) {
             onClick={handleClick}
           ></div>
         </div>
-        <div className="max-w-[300px] px-4 py-2 text-sm">
-          <div className="flex justify-between font-bold">
-            <p>APM</p>
-            <p>{apm}</p>
+        <div className="flex justify-between px-4 py-2 text-sm">
+          <div className="w-full max-w-[260px]">
+            <div className="flex justify-between font-bold">
+              <p>APM</p>
+              <p>{apm}</p>
+            </div>
+            <div className="flex justify-between font-bold">
+              <p>time</p>
+              <p>{time}</p>
+            </div>
+            <div className="flex justify-between">
+              <p>clicks</p>
+              <p>{clicks}</p>
+            </div>
+            <div className="flex justify-between">
+              <p>hits</p>
+              <p>{hits}</p>
+            </div>
+            <div className="flex justify-between">
+              <p>wrong hits</p>
+              <p>{wrongHits}</p>
+            </div>
+            <div className="flex justify-between">
+              <p>misses</p>
+              <p>{clicks - hits}</p>
+            </div>
+            <div className="flex justify-between">
+              <p>type</p>
+              <p>decrescent</p>
+            </div>
+            <div className="flex justify-between">
+              <p>targets</p>
+              <p>{selectedCircles}</p>
+            </div>
           </div>
-          <div className="flex justify-between font-bold">
-            <p>time</p>
-            <p>{time}</p>
-          </div>
-          <div className="flex justify-between">
-            <p>clicks</p>
-            <p>{clicks}</p>
-          </div>
-          <div className="flex justify-between">
-            <p>hits</p>
-            <p>{hits}</p>
-          </div>
-          <div className="flex justify-between">
-            <p>wrong hits</p>
-            <p>{wrongHits}</p>
-          </div>
-          <div className="flex justify-between">
-            <p>misses</p>
-            <p>{clicks - hits}</p>
-          </div>
-          <div className="flex justify-between">
-            <p>type</p>
-            <p>decrescent</p>
-          </div>
-          <div className="flex justify-between">
-            <p>targets</p>
-            <p>{selectedCircles}</p>
+          <div className="flex flex-col justify-between items-end">
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between">
+                <p>max APM</p>
+                <p>540</p>
+              </div>
+              <p className="text-gray-300">
+                press <strong className="text-white">r</strong> or{" "}
+                <strong className="text-white">space</strong> to{" "}
+                <button onClick={handleReset} className="outline-none">
+                  reset
+                </button>
+              </p>
+            </div>
+            <Link href="/leaderboard" className="hover:underline">
+              leaderboard {"->"}
+            </Link>
           </div>
         </div>
       </div>

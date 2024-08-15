@@ -14,6 +14,18 @@
   src: url("./cpmonov07apm/CPMono_v07_Plain.otf");
 }
 
+input:-webkit-autofill {
+  background-color: transparent !important;
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+  box-shadow: 0 0 0px 1000px transparent inset !important;
+}
+
+input:-webkit-autofill::first-line {
+  color: inherit !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+}
+
 *,
 ::after,
 ::before {
