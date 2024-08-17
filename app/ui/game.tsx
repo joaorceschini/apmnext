@@ -31,7 +31,7 @@ export default function Game({ user }: { user: User | null }) {
 
   const getHighestApm = useCallback(async () => {
     try {
-      if (!user) throw new Error("Unauthorized");
+      if (!user) return 0;
 
       const { data, error } = await supabase
         .from("scores")
@@ -230,6 +230,8 @@ export default function Game({ user }: { user: User | null }) {
     time: number | null;
     selectedCircles: number | null;
   }) {
+    if (!user) return;
+
     try {
       if (!user) {
         console.log("no user");

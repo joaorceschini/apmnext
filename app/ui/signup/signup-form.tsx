@@ -98,7 +98,7 @@ export default function SignupForm() {
           id="password"
           name="password"
           type="password"
-          placeholder="Enter password"
+          placeholder="enter password"
           className="w-full bg-transparent outline-none"
           value={password}
           onChange={(e) => setPassword(e.target.value)}

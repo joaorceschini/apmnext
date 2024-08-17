@@ -19,6 +19,7 @@ export default function UserInfo({ user }: { user: User | null }) {
   );
 
   const getProfile = useCallback(async () => {
+    if (!user) return;
     try {
       const { data, error, status } = await supabase
         .from("profiles")
@@ -41,6 +42,7 @@ export default function UserInfo({ user }: { user: User | null }) {
   }, [user, supabase]);
 
   const getUserScoresCount = useCallback(async () => {
+    if (!user) return;
     try {
       const { count, error } = await supabase
         .from("scores")
@@ -94,23 +96,31 @@ export default function UserInfo({ user }: { user: User | null }) {
   }, [avatarUrl, supabase]);
 
   return (
-    <div className="flex gap-2 items-end">
-      <div className="h-full flex flex-col justify-end">
-        <p className="opacity-70 text-end">{romanLevel || "-"}</p>
-        <p>{username || "..."}</p>
-      </div>
-      <Link
-        href={`/${user?.id}`}
-        className="relative hover:opacity-70 w-[50px] h-[50px]"
-      >
-        <Image
-          src={downloadedAvatar || "/perfect-blue.jpg"}
-          alt="user avatar"
-          layout={"fill"}
-          fill
-          style={{ objectFit: "cover" }}
-        />
-      </Link>
-    </div>
+    <>
+      {!user ? (
+        <Link href="/login" className="hover:opacity-70">
+          login
+        </Link>
+      ) : (
+        <div className="flex gap-2 items-end">
+          <div className="h-full flex flex-col justify-end">
+            <p className="opacity-70 text-end">{romanLevel || "-"}</p>
+            <p>{username || "..."}</p>
+          </div>
+          <Link
+            href={`/${user?.id}`}
+            className="relative hover:opacity-70 w-[50px] h-[50px]"
+          >
+            <Image
+              src={downloadedAvatar || "/perfect-blue.jpg"}
+              alt="user avatar"
+              layout={"fill"}
+              fill
+              style={{ objectFit: "cover" }}
+            />
+          </Link>
+        </div>
+      )}
+    </>
   );
 }
