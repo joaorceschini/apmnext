@@ -126,7 +126,9 @@ export default function Table({ user }: { user: User | null }) {
               <div className="flex justify-between opacity-50">
                 <div className="w-[15px] mr-2"></div>
                 <p className="w-full flex-1">username</p>
-                <p className="w-full flex-1 text-right">HS[6] APM</p>
+                <p className="w-full flex-1 text-right">
+                  HS[{selectedCircles}] APM
+                </p>
                 <p className="w-full flex-1 text-right">TIME</p>
                 <p className="w-full flex-1 text-right">LEVEL</p>
               </div>
