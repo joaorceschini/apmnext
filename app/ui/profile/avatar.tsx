@@ -73,8 +73,10 @@ export default function Avatar({
         <Image
           src={avatarUrl || "/perfect-blue.jpg"}
           alt="user avatar"
-          layout={"fill"}
-          objectFit={"cover"}
+          fill
+          style={{ objectFit: "cover" }}
+          priority
+          sizes="(max-width: 768px) 150px, 150px"
         />
       </label>
       <input

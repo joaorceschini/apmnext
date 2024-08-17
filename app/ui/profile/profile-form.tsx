@@ -117,7 +117,7 @@ export default function ProfileForm({
   return (
     <>
       {notFound ? (
-        <div className="px-4 py-2">
+        <div className="w-full px-4 py-2">
           <p>{notFound}</p>
         </div>
       ) : (
@@ -225,7 +225,7 @@ export default function ProfileForm({
                   </div>
 
                   <div>
-                    <form action={signOut} method="post">
+                    <form action={signOut} method="POST">
                       <button className="button block" type="submit">
                         sign out
                       </button>

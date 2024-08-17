@@ -9,6 +9,7 @@ import {
 import Link from "next/link";
 import { signup } from "./actions";
 import Header from "@/app/ui/header";
+import SignupForm from "../ui/signup/signup-form";
 
 export default async function Login({
   searchParams,
@@ -36,64 +37,7 @@ export default async function Login({
             </div>
           </div>
           <div className="flex flex-col gap-4 px-4 py-2 max-w-[250px]">
-            <form id="signup-form">
-              <div>
-                <label htmlFor="username" className="sr-only">
-                  username
-                </label>
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  placeholder="enter username"
-                  className="w-full bg-transparent outline-none"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="email" className="sr-only">
-                  email
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="enter email"
-                  className="w-full bg-transparent outline-none"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="password" className="sr-only">
-                  password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="enter password"
-                  className="w-full bg-transparent outline-none"
-                  required
-                  minLength={6}
-                />
-              </div>
-              {searchParams.message && (
-                <div className="text-sm font-medium text-destructive">
-                  {searchParams.message}
-                </div>
-              )}
-              <div className="flex justify-between mt-2">
-                <button className="button primary block" formAction={signup}>
-                  create account
-                </button>
-                <Link
-                  href="/login"
-                  className="text-start opacity-50 hover:opacity-100"
-                >
-                  login
-                </Link>
-              </div>
-            </form>
+            <SignupForm />
           </div>
         </div>
       </div>

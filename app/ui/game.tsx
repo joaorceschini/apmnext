@@ -118,7 +118,7 @@ export default function Game({ user }: { user: User | null }) {
       var apm = Math.ceil((CIRCLES / time) * 1e3 * 60 * 1.8);
       setClicks((clicks) => clicks + 1);
       const highestApm = await getHighestApm();
-      if (!hs || apm > highestApm) {
+      if (apm > highestApm) {
         getHighestApm();
         setIsHs(true);
       }

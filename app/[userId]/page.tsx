@@ -1,7 +1,4 @@
-import Image from "next/image";
-import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
-import { redirect } from "next/navigation";
 import ProfileForm from "@/app/ui/profile/profile-form";
 import Header from "@/app/ui/header";
 import UserStats from "@/app/ui/profile/userstats";
