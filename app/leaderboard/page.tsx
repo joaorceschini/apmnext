@@ -1,6 +1,11 @@
 import { createClient } from "@/utils/supabase/server";
 import Header from "@/app/ui/header";
 import Table from "@/app/ui/leaderboard/table";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "leaderboard",
+};
 
 export default async function Leaderboard({
   params,

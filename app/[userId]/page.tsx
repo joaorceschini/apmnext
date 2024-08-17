@@ -2,6 +2,11 @@ import { createClient } from "@/utils/supabase/server";
 import ProfileForm from "@/app/ui/profile/profile-form";
 import Header from "@/app/ui/header";
 import UserStats from "@/app/ui/profile/userstats";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "profile",
+};
 
 export default async function Profile({
   params,

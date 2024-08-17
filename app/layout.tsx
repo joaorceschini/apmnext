@@ -1,6 +1,7 @@
 import "./globals.css";
 
 import localFont from "next/font/local";
+import type { Metadata } from "next";
 
 const cpmono = localFont({
   src: [
@@ -31,10 +32,23 @@ const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : "http://localhost:3000";
 
-export const metadata = {
+export const metadata: Metadata = {
+  title: {
+    template: "%s | apm test",
+    default: "apm test",
+  },
+  description: "apm test peak performance peak design peak experience",
   metadataBase: new URL(defaultUrl),
-  title: "apm test",
-  description: "apm test / peak design / peak performance / peak experience",
+  keywords: [
+    "apm",
+    "test",
+    "actions per minute",
+    "apm test",
+    "performance",
+    "font mono",
+    "webgl",
+    "pixijs",
+  ],
 };
 
 export default function RootLayout({

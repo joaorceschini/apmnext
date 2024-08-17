@@ -1,9 +1,13 @@
-import { Button } from "@/app/ui/button";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
 import { emailLogin } from "./actions";
 import Header from "@/app/ui/header";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "login",
+};
 
 export default async function Login({
   searchParams,

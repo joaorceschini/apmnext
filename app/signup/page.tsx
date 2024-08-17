@@ -1,15 +1,12 @@
-import { Button } from "@/app/ui/button";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import {
-  ArrowRightIcon,
-  UserCircleIcon,
-  KeyIcon,
-} from "@heroicons/react/20/solid";
-import Link from "next/link";
-import { signup } from "./actions";
 import Header from "@/app/ui/header";
 import SignupForm from "../ui/signup/signup-form";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "signup",
+};
 
 export default async function Login({
   searchParams,
