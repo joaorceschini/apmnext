@@ -183,7 +183,7 @@ export default function Game({ user }: { user: User | null }) {
 
     getHighestApm();
 
-    const keyUpHandler = (e: any) => {
+    const keyDownHandler = (e: any) => {
       if (
         e.key === "r" ||
         e.code === "KeyR" ||
@@ -196,12 +196,12 @@ export default function Game({ user }: { user: User | null }) {
         setResetToggle(!resetToggle);
       }
     };
-    document.addEventListener("keyup", keyUpHandler);
+    document.addEventListener("keydown", keyDownHandler);
 
     return () => {
       clearInterval(intervalId);
       pixiApp.destroy(true, { children: true });
-      document.removeEventListener("keyup", keyUpHandler);
+      document.removeEventListener("keydown", keyDownHandler);
     };
   }, [selectedCircles, resetToggle]);
 
