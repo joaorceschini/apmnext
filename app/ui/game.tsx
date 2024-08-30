@@ -2,32 +2,73 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import * as PIXI from "pixi.js";
-import UserInfo from "./userinfo";
 import { type User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
+import UserInfo from "./userinfo";
 
 const RADIUS = 25;
-const CIRCLES = 50;
+const CIRCLES_TOTAL = 50;
+const GRID_SIZE = 50;
+const COLS = 500 / GRID_SIZE;
+const ROWS = 300 / GRID_SIZE;
+
+type GameState = {
+  apm: number;
+  time: number;
+  clicks: number;
+  hits: number;
+  wrongHits: number;
+};
 
 export default function Game({ user }: { user: User | null }) {
   const supabase = createClient();
   const canvasRef = useRef<HTMLDivElement>(null);
   const fpsRef = useRef<number>(0);
-  const [clicks, setClicks] = useState(0);
-  const [hits, setHits] = useState(0);
-  const [wrongHits, setWrongHits] = useState(0);
   const [selectedCircles, setSelectedCircles] = useState(6);
   const [resetToggle, setResetToggle] = useState(false);
-  const [time, setTime] = useState(0);
-  const [apm, setApm] = useState(0);
   const [fps, setFps] = useState(0);
   const [isHs, setIsHs] = useState(false);
   const [hs, setHs] = useState<number | null>(null);
   const [bestTime, setBestTime] = useState<number | null>(null);
+  const [gameState, setGameState] = useState<GameState>({
+    apm: 0,
+    time: 0,
+    clicks: 0,
+    hits: 0,
+    wrongHits: 0,
+  });
+
+  let occupiedCells = Array(ROWS)
+    .fill(false)
+    .map(() => Array(COLS).fill(false));
 
   var timeStart: number;
   var timeEnd: number;
+
+  let circles: {
+    arr: { x: number; y: number; n: number }[];
+    pos: number;
+  } = {
+    arr: [],
+    pos: CIRCLES_TOTAL,
+  };
+
+  function getCircle() {
+    return {
+      x: getRndX(),
+      y: getRndY(),
+      n: circles.pos,
+    };
+  }
+
+  function getRndX() {
+    return Math.floor(Math.random() * COLS) * GRID_SIZE + GRID_SIZE / 2;
+  }
+
+  function getRndY() {
+    return Math.floor(Math.random() * ROWS) * GRID_SIZE + GRID_SIZE / 2;
+  }
 
   const getHighestApm = useCallback(async () => {
     try {
@@ -53,173 +94,6 @@ export default function Game({ user }: { user: User | null }) {
       return 0;
     }
   }, [user, supabase, selectedCircles]);
-
-  function resetStats() {
-    numbers.arr = [];
-    setTime(0);
-    setApm(0);
-    setClicks(0);
-    setHits(0);
-    setWrongHits(0);
-    setIsHs(false);
-  }
-
-  let numbers: {
-    arr: { x: number; y: number; n: number }[];
-    pos: number;
-  } = {
-    arr: [],
-    pos: CIRCLES,
-  };
-
-  function getRndInteger(min: number, max: number) {
-    return Math.floor(Math.random() * (max - min)) + min;
-  }
-
-  function spawnCircle(numbers: {
-    arr: { x: number; y: number; n: number }[];
-    pos: number;
-  }) {
-    var circle = {
-      x: getRndInteger(RADIUS, 500 - RADIUS),
-      y: getRndInteger(RADIUS, 300 - RADIUS),
-      n: numbers.pos,
-    };
-    if (numbers.pos > 0) {
-      numbers.pos -= 1;
-      numbers.arr.push(circle);
-      return;
-    }
-  }
-
-  const handleHit = (pixiApp: any, target: PIXI.Container, n: number) => {
-    if (n == numbers.arr[0].n) {
-      if (n == CIRCLES) timeStart = new Date().getTime();
-      pixiApp.stage.removeChild(target);
-      setHits((hits) => hits + 1);
-      numbers.arr.shift();
-      spawnCircle(numbers);
-      drawCircles(pixiApp, numbers.arr);
-    } else {
-      setWrongHits((wrongHits) => wrongHits + 1);
-    }
-  };
-
-  async function drawCircles(
-    pixiApp: any,
-    arr: { x: number; y: number; n: number }[],
-  ) {
-    pixiApp.stage.removeChildren();
-
-    if (arr.length == 0) {
-      timeEnd = new Date().getTime();
-      const time = timeEnd - timeStart;
-      const timeFormated = time / 1000;
-      var apm = Math.ceil((CIRCLES / time) * 1e3 * 60 * 1.8);
-      setClicks((clicks) => clicks + 1);
-      const highestApm = await getHighestApm();
-      if (apm > highestApm) {
-        getHighestApm();
-        setIsHs(true);
-      }
-      setApm(apm);
-      setTime(timeFormated);
-      addScore({ apm, time, selectedCircles });
-    }
-
-    arr
-      .slice()
-      .reverse()
-      .forEach((circle) => {
-        const target = new PIXI.Graphics();
-        target.lineStyle(2, 0x333333, 1);
-        target.beginFill(0x666666);
-        target.drawCircle(circle.x, circle.y, RADIUS);
-        target.endFill();
-
-        const text = new PIXI.Text(circle.n.toString(), {
-          fontFamily: "Arial",
-          fontSize: 20,
-          fill: "fff",
-          align: "center",
-        });
-        text.x = circle.x - text.width / 2;
-        text.y = circle.y - text.height / 2;
-
-        target.addChild(text);
-
-        target.eventMode = "static";
-        target.on("pointerdown", () => handleHit(pixiApp, target, circle.n));
-
-        pixiApp.stage.addChild(target);
-      });
-  }
-
-  useEffect(() => {
-    const pixiApp = new PIXI.Application({
-      width: 500,
-      height: 300,
-      antialias: true,
-      resolution: 1,
-    });
-
-    if (canvasRef.current && pixiApp.view instanceof HTMLCanvasElement) {
-      canvasRef.current.appendChild(pixiApp.view);
-    }
-
-    PIXI.Ticker.shared.add(() => {
-      fpsRef.current = PIXI.Ticker.shared.FPS;
-    });
-
-    const intervalId = setInterval(() => {
-      setFps(fpsRef.current);
-    }, 500);
-
-    for (let i = 0; i < selectedCircles; i++) {
-      spawnCircle(numbers);
-    }
-
-    drawCircles(pixiApp, numbers.arr);
-
-    getHighestApm();
-
-    const keyDownHandler = (e: any) => {
-      if (
-        e.key === "r" ||
-        e.code === "KeyR" ||
-        e.which === "82" ||
-        e.key === " " ||
-        e.code === "Space" ||
-        e.which === "32"
-      ) {
-        resetStats();
-        setResetToggle(!resetToggle);
-      }
-    };
-    document.addEventListener("keydown", keyDownHandler);
-
-    return () => {
-      clearInterval(intervalId);
-      pixiApp.destroy(true, { children: true });
-      document.removeEventListener("keydown", keyDownHandler);
-    };
-  }, [selectedCircles, resetToggle]);
-
-  function handleReset() {
-    resetStats();
-    setResetToggle(!resetToggle);
-  }
-
-  const changeSelectOptionHandler = (event: any) => {
-    resetStats();
-    setSelectedCircles(Number(event.target.value));
-  };
-
-  const handleClick = () => {
-    if (!apm) {
-      setClicks(clicks + 1);
-    }
-  };
 
   async function addScore({
     apm,
@@ -258,6 +132,183 @@ export default function Game({ user }: { user: User | null }) {
     }
   }
 
+  function resetStats() {
+    setIsHs(false);
+    setGameState({
+      apm: 0,
+      time: 0,
+      clicks: 0,
+      hits: 0,
+      wrongHits: 0,
+    });
+  }
+
+  async function handleHit(
+    pixiApp: PIXI.Application,
+    target: PIXI.Container,
+    targett: { x: number; y: number; n: number },
+  ) {
+    if (targett.n == circles.pos + selectedCircles) {
+      if (targett.n == CIRCLES_TOTAL) timeStart = new Date().getTime();
+      pixiApp.stage.removeChild(target);
+
+      if (circles.pos > 0) {
+        spawnCircle(pixiApp);
+      }
+      occupiedCells[targett.y / (RADIUS * 2) - 0.5][
+        targett.x / (RADIUS * 2) - 0.5
+      ] = false;
+      circles.pos -= 1;
+      setGameState((prevState) => ({
+        ...prevState,
+        hits: prevState.hits + 1,
+      }));
+    } else {
+      setGameState((prevState) => ({
+        ...prevState,
+        wrongHits: prevState.wrongHits + 1,
+      }));
+    }
+
+    if (circles.pos + selectedCircles <= 0) {
+      timeEnd = new Date().getTime();
+      const time = timeEnd - timeStart;
+      const timeFormated = time / 1000;
+      var apm = Math.ceil((CIRCLES_TOTAL / time) * 1e3 * 60 * 1.8);
+      setGameState((prevState) => ({
+        ...prevState,
+        clicks: prevState.clicks + 1,
+        apm: apm,
+        time: timeFormated,
+      }));
+
+      const highestApm = await getHighestApm();
+      if (apm > highestApm) {
+        getHighestApm();
+        setIsHs(true);
+      }
+      addScore({ apm, time, selectedCircles });
+    }
+  }
+
+  function spawnCircle(pixiApp: PIXI.Application) {
+    let circle = {
+      x: 0,
+      y: 0,
+      n: circles.pos,
+    };
+
+    let x = 0;
+    let y = 0;
+    do {
+      circle = getCircle();
+      x = circle.x / (RADIUS * 2) - 0.5;
+      y = circle.y / (RADIUS * 2) - 0.5;
+    } while (occupiedCells[y][x]);
+
+    occupiedCells[y][x] = true;
+
+    drawCircle(pixiApp, circle);
+  }
+
+  function drawCircle(
+    pixiApp: PIXI.Application,
+    circle: { x: number; y: number; n: number },
+  ) {
+    const target = new PIXI.Graphics();
+    target.lineStyle(2, 0x333333, 1);
+    target.beginFill(0x666666);
+    target.drawCircle(circle.x, circle.y, RADIUS);
+    target.endFill();
+
+    const text = new PIXI.Text(circle.n.toString(), {
+      fontFamily: "Arial",
+      fontSize: 20,
+      fill: "fff",
+      align: "center",
+    });
+    text.x = circle.x - text.width / 2;
+    text.y = circle.y - text.height / 2;
+
+    target.addChild(text);
+
+    target.eventMode = "static";
+    target.on("pointerdown", () => handleHit(pixiApp, target, circle));
+
+    pixiApp.stage.addChild(target);
+  }
+
+  useEffect(() => {
+    const pixiApp = new PIXI.Application({
+      width: 500,
+      height: 300,
+      antialias: true,
+      resolution: 1,
+    });
+
+    if (canvasRef.current && pixiApp.view instanceof HTMLCanvasElement) {
+      canvasRef.current.appendChild(pixiApp.view);
+    }
+
+    PIXI.Ticker.shared.add(() => {
+      fpsRef.current = PIXI.Ticker.shared.FPS;
+    });
+
+    const fpsInterval = setInterval(() => {
+      setFps(fpsRef.current);
+    }, 500);
+
+    for (let i = 0; i < selectedCircles; i++) {
+      if (circles.pos > 0) {
+        spawnCircle(pixiApp);
+        circles.pos -= 1;
+      }
+    }
+
+    getHighestApm();
+
+    const keyDownHandler = (e: any) => {
+      if (
+        e.key === "r" ||
+        e.code === "KeyR" ||
+        e.which === "82" ||
+        e.key === " " ||
+        e.code === "Space" ||
+        e.which === "32"
+      ) {
+        resetStats();
+        setResetToggle(!resetToggle);
+      }
+    };
+    document.addEventListener("keydown", keyDownHandler);
+
+    return () => {
+      clearInterval(fpsInterval);
+      pixiApp.destroy(true, { children: true });
+      document.removeEventListener("keydown", keyDownHandler);
+    };
+  }, [selectedCircles, resetToggle]);
+
+  function handleReset() {
+    resetStats();
+    setResetToggle(!resetToggle);
+    setResetToggle(!resetToggle);
+  }
+
+  const changeSelectOptionHandler = (event: any) => {
+    resetStats();
+    setSelectedCircles(Number(event.target.value));
+  };
+
+  const handleClick = () => {
+    if (!gameState.apm) {
+      setGameState((prevState) => ({
+        ...prevState,
+        clicks: prevState.clicks + 1,
+      }));
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex max-w-full px-4 justify-between text-sm">
@@ -295,27 +346,31 @@ export default function Game({ user }: { user: User | null }) {
           <div className="w-full max-w-[260px]">
             <div className="flex justify-between font-bold">
               <p>APM</p>
-              {isHs ? <p className="text-amber-200">{apm}</p> : <p>{apm}</p>}
+              {isHs ? (
+                <p className="text-amber-200">{gameState.apm}</p>
+              ) : (
+                <p>{gameState.apm}</p>
+              )}
             </div>
             <div className="flex justify-between font-bold">
               <p>TIME</p>
-              <p>{time}</p>
+              <p>{gameState.time}</p>
             </div>
             <div className="flex justify-between">
               <p>clicks</p>
-              <p>{clicks}</p>
+              <p>{gameState.clicks}</p>
             </div>
             <div className="flex justify-between">
               <p>hits</p>
-              <p>{hits}</p>
+              <p>{gameState.hits}</p>
             </div>
             <div className="flex justify-between">
               <p>wrong hits</p>
-              <p>{wrongHits}</p>
+              <p>{gameState.wrongHits}</p>
             </div>
             <div className="flex justify-between">
               <p>misses</p>
-              <p>{clicks - hits}</p>
+              <p>{gameState.clicks - gameState.hits}</p>
             </div>
             <div className="flex justify-between">
               <p>targets</p>
