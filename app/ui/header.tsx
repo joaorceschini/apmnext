@@ -7,7 +7,7 @@ export default async function Header() {
         apm test
       </Link>
       <Link
-        href="https://github.com/joaorceschini"
+        href="https://github.com/joaorceschini/apmnext"
         target="_blank"
         className="hover:underline opacity-50 text-xs"
       >
